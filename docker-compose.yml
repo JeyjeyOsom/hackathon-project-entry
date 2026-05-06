@@ -10,7 +10,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - storage:/app/storage
+      - brand_assets_volume:/app/tmp/uploads
     depends_on:
       database:
         condition: service_healthy
@@ -53,7 +53,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_volume:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
       interval: 5s
@@ -61,5 +61,5 @@ services:
       retries: 10
 
 volumes:
-  storage:
-  pgdata:
+  brand_assets_volume:
+  pgdata_volume:

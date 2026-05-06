@@ -16,7 +16,7 @@ export default class UploadAssetController {
       return response.badRequest({ message: 'No file uploaded.' })
     }
 
-    const uploadDir = app.makePath('storage', 'uploads', 'brands', params.brandId)
+    const uploadDir = app.makePath('tmp', 'uploads', 'brands', params.brandId)
     await mkdir(uploadDir, { recursive: true })
 
     const fileName = `${Date.now()}-${file.clientName}`

@@ -21,6 +21,136 @@ A lightweight platform that:
 
 ---
 
+## Prerequisites & Setup
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|---|---|---|
+| [Docker](https://docs.docker.com/get-docker/) + Compose V2 | Latest | `docker compose` (not `docker-compose`) |
+| [Gemini API Key](https://aistudio.google.com/app/apikey) | Free tier | Required for compliance checks |
+| Node.js *(local dev only)* | 22+ | Only needed if running without Docker |
+| PostgreSQL *(local dev only)* | 15+ | Only needed if running without Docker |
+
+---
+
+### 1. Environment Configuration
+
+Copy the root-level example file and fill in the required values:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set the two required variables:
+
+```dotenv
+# Required — generate a free key at https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Required for production; the default below is safe for local development only
+APP_KEY=zKXHe-Ahdb7aPK1ylAJlRgTefktEaACi
+```
+
+All other variables have working defaults for local development (Postgres credentials, ports, etc.). See [.env.example](.env.example) for the full list.
+
+---
+
+### 2. Quick Start (Docker — Recommended)
+
+Docker Compose builds all three containers, runs database migrations automatically, and starts every service in the correct order.
+
+```bash
+# 1. Configure environment (see step above)
+cp .env.example .env
+# edit .env and set GEMINI_API_KEY
+
+# 2. Build images and start all services
+docker compose up --build
+```
+
+On first run, Docker will:
+1. Build the `backend` and `frontend` images from their Dockerfiles
+2. Start the `database` container and wait for it to pass its health check
+3. Run all pending database migrations (`node ace migration:run --force`)
+4. Start the AdonisJS dev server (with HMR) and the Vite dev server
+
+Once running, the app is available at:
+
+| Service | URL |
+|---|---|
+| Frontend (Vue / Vite) | <http://localhost:5173> |
+| Backend API (AdonisJS) | <http://localhost:3333> |
+| PostgreSQL | `localhost:5432` |
+
+**Stopping the stack:**
+
+```bash
+# Stop containers (data volumes are preserved)
+docker compose down
+
+# Stop containers AND delete all data volumes (full reset)
+docker compose down -v
+```
+
+---
+
+### 3. Local Development (Without Docker)
+
+Use this path when you need direct IDE debugging or want to run services individually.
+
+#### 3a. Database
+
+Start a local PostgreSQL 15 instance and create the database:
+
+```sql
+CREATE DATABASE brand_ai;
+```
+
+#### 3b. Backend
+
+```bash
+cd backend
+
+# Install dependencies
+npm install
+
+# Copy and configure the backend-specific env file
+cp .env.example .env
+# edit .env — set DB_HOST=localhost and add your GEMINI_API_KEY
+
+# Run database migrations
+node ace migration:run
+
+# Start the dev server (port 3333, with HMR)
+npm run dev
+```
+
+#### 3c. Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the Vite dev server (port 5173)
+npm run dev
+```
+
+---
+
+### Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| Backend exits immediately on startup | `database` container not ready | Let the health check finish; retry `docker compose up` |
+| Compliance checks return a neutral score | `GEMINI_API_KEY` missing or invalid | Verify the key in `.env` and restart the backend |
+| Port already in use | Another process on 3333 or 5173 | Stop the conflicting process or change the port in `.env` and `docker-compose.yml` |
+| Migration errors on first run | Stale volume from an old schema | Run `docker compose down -v` to clear volumes, then `docker compose up --build` |
+
+---
+
 ## Architecture
 
 ### 1. Frontend Layer (Vue.js)
